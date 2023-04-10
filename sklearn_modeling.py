@@ -1,6 +1,7 @@
 # %%
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -46,4 +47,19 @@ knn.fit(X_train, y_train)
 print(knn.score(X_test, y_test))
 print(confusion_matrix(y_test, knn.predict(X_test)))
 print(classification_report(y_test, knn.predict(X_test)))
+# %%
+ks = [k for k in range(3, 25, 2)]
+scores = []
+for k in ks:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train, y_train)
+    scores.append(knn.score(X_test, y_test))
+plt.plot(ks, scores)
+plt.show()
+# %%
+mlp = MLPClassifier(activation="logistic")
+mlp.fit(X_train, y_train)
+print(mlp.score(X_test, y_test))
+print(confusion_matrix(y_test, mlp.predict(X_test)))
+print(classification_report(y_test, mlp.predict(X_test)))
 # %%

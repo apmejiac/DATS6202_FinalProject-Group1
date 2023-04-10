@@ -45,6 +45,30 @@ from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(df_pca, y, test_size=0.33, random_state=42)
 
+from sklearn.neural_network import MLPClassifier
+
+# Initializing the multilayer perceptron
+mlp = MLPClassifier(hidden_layer_sizes=10,solver='lbfgs',learning_rate_init= 0.01, max_iter=500)
+
+mlp.fit(X_train, y_train)
+
+print (mlp.score(X_test,y_test))
+
+from sklearn.metrics import confusion_matrix
+y_pred = mlp.predict(X_test)
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+
+from sklearn.metrics import plot_confusion_matrix
+#Pretty CM Graph
+color = 'white'
+matrix = plot_confusion_matrix(mlp, X_test, y_test, cmap=plt.cm.Blues)
+matrix.ax_.set_title('Confusion Matrix', color=color)
+plt.xlabel('Predicted Label', color=color)
+plt.ylabel('True Label', color=color)
+plt.gcf().axes[0].tick_params(colors=color)
+plt.gcf().axes[1].tick_params(colors=color)
+plt.show()
 
 
 

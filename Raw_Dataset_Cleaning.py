@@ -35,4 +35,4 @@ print(len(df))
 #No Outliers were removed per the standard meand + 3*sd criteria
 
 #Now we will save the cleaned dataset as a separate csv
-df.to_csv('EQ_Clean.csv')
+df.to_csv('EQ_Clean.csv', index=False)

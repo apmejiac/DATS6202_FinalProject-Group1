@@ -15,16 +15,26 @@ data = pd.read_csv("EQ_Clean.csv")
 data.head()
 # %%
 # Preparing Data
-data_features = data.drop(["title", "date_time", "location", "tsunami"], axis=1)
+data_features = data.drop(["title", "date_time", "tsunami"], axis=1)
 data_target = data[["tsunami"]]
 data_features.head()
+
+# Feature Engineering: Extract country
+for i, row in data.iterrows():
+    data_country = row["location"].split(',')
+    if len(data_country) == 2:
+        data.loc[i, "country"] = data_country[1].strip()
+    else:
+        data.loc[i, "country"] = data_country[0]
+        
+print(data.country.value_counts())
 # %%
 # IMPORTANT: The magnitude rictor scale is an exponential scale, so it might not make sense
 # to scale this variable as it might mess it up. Thoughts?
 dataPreprocessor = ColumnTransformer(transformers=
     [
-        ("categorical", OneHotEncoder(), ["magType", "net"])
-        # ("numeric", StandardScaler(), []) decide what to do with these
+        ("categorical", OneHotEncoder(), ["magType", "net", "country"])
+        #("numeric", StandardScaler(), ["magnitude", "cdi", "mmi", "sig", "nst", "dmin", "gap", "depth", "latitude", "longitude"])
     ], verbose_feature_names_out=False, remainder="passthrough")
 
 data_features_newmatrix = dataPreprocessor.fit_transform(data_features)
@@ -57,7 +67,7 @@ for k in ks:
 plt.plot(ks, scores)
 plt.show()
 # %%
-mlp = MLPClassifier(activation="logistic")
+mlp = MLPClassifier()
 mlp.fit(X_train, y_train)
 print(mlp.score(X_test, y_test))
 print(confusion_matrix(y_test, mlp.predict(X_test)))

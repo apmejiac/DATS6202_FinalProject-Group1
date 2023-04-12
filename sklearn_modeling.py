@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.compose import ColumnTransformer
 # %%
@@ -14,11 +15,6 @@ data = pd.read_csv("EQ_Clean.csv")
 
 data.head()
 # %%
-# Preparing Data
-data_features = data.drop(["title", "date_time", "tsunami"], axis=1)
-data_target = data[["tsunami"]]
-data_features.head()
-
 # Feature Engineering: Extract country
 for i, row in data.iterrows():
     data_country = row["location"].split(',')
@@ -28,6 +24,11 @@ for i, row in data.iterrows():
         data.loc[i, "country"] = data_country[0]
         
 print(data.country.value_counts())
+
+# Preparing Data
+data_features = data.drop(["title", "date_time", "tsunami", "location"], axis=1)
+data_target = data[["tsunami"]]
+data_features.head()
 # %%
 # IMPORTANT: The magnitude rictor scale is an exponential scale, so it might not make sense
 # to scale this variable as it might mess it up. Thoughts?
@@ -39,7 +40,7 @@ dataPreprocessor = ColumnTransformer(transformers=
 
 data_features_newmatrix = dataPreprocessor.fit_transform(data_features)
 new_col_names = dataPreprocessor.get_feature_names_out()
-data_features_new = pd.DataFrame(data_features_newmatrix, columns=new_col_names)
+data_features_new = pd.DataFrame(data_features_newmatrix.toarray(), columns=new_col_names)
 print(data_features_new.shape)
 data_features_new.head()
 # %%
@@ -72,4 +73,10 @@ mlp.fit(X_train, y_train)
 print(mlp.score(X_test, y_test))
 print(confusion_matrix(y_test, mlp.predict(X_test)))
 print(classification_report(y_test, mlp.predict(X_test)))
+# %%
+rfc = RandomForestClassifier()
+rfc.fit(X_train, y_train)
+print(rfc.score(X_test, y_test))
+print(confusion_matrix(y_test, rfc.predict(X_test)))
+print(classification_report(y_test, rfc.predict(X_test)))
 # %%

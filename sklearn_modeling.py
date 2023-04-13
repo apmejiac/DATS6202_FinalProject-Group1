@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report, plot_confusion_matrix, accuracy_score, recall_score
 from sklearn.compose import ColumnTransformer
 # %%
 data = pd.read_csv("EQ_Clean.csv")
@@ -34,8 +34,8 @@ data_features.head()
 # to scale this variable as it might mess it up. Thoughts?
 dataPreprocessor = ColumnTransformer(transformers=
     [
-        ("categorical", OneHotEncoder(), ["magType", "net", "country"])
-        #("numeric", StandardScaler(), ["magnitude", "cdi", "mmi", "sig", "nst", "dmin", "gap", "depth", "latitude", "longitude"])
+        ("categorical", OneHotEncoder(), ["magType", "net", "country"]),
+        ("numeric", StandardScaler(), ["magnitude", "cdi", "mmi", "sig", "nst", "dmin", "gap", "depth", "latitude", "longitude"])
     ], verbose_feature_names_out=False, remainder="passthrough")
 
 data_features_newmatrix = dataPreprocessor.fit_transform(data_features)
@@ -73,10 +73,84 @@ mlp.fit(X_train, y_train)
 print(mlp.score(X_test, y_test))
 print(confusion_matrix(y_test, mlp.predict(X_test)))
 print(classification_report(y_test, mlp.predict(X_test)))
+# %% Trying out different activation functions
+funcs = ['relu', 'identity', 'logistic', 'tanh']
+for func in funcs:
+    mlp = MLPClassifier(activation=func)
+    mlp.fit(X_train, y_train)
+    print(f"Model score for {func} function: {mlp.score(X_test, y_test)}")
+# %% Trying different solvers
+solvers = ['lbfgs', 'sgd', 'adam']
+for solver in solvers:
+    mlp = MLPClassifier(solver=solver, activation='relu')
+    mlp.fit(X_train, y_train)
+    print(f"Model score for {solver} solver: {mlp.score(X_test, y_test)}")
+# %% relu and adam are the best
+mlp_optum = MLPClassifier(activation='relu', solver="adam")
+mlp_optum.fit(X_train, y_train)
+print(mlp_optum.score(X_test, y_test))
+print(classification_report(y_test, mlp_optum.predict(X_test)))
+matrix = plot_confusion_matrix(mlp_optum, X_test, y_test, cmap=plt.cm.Blues)
+plt.show()
+
 # %%
 rfc = RandomForestClassifier()
 rfc.fit(X_train, y_train)
 print(rfc.score(X_test, y_test))
 print(confusion_matrix(y_test, rfc.predict(X_test)))
 print(classification_report(y_test, rfc.predict(X_test)))
+# %% finding good cutoff values
+predicted_probs = rfc.predict_proba(X_test)
+cutoffs = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+scores = []
+for cutoff in cutoffs:
+    outcome = []
+    for prediction in predicted_probs[:, 1]:
+        if prediction >= cutoff:
+            outcome.append(1)
+        else:
+            outcome.append(0)
+    #outcome = outcome.to_array()
+    score = accuracy_score(y_test, outcome)
+    scores.append(score)
+    print(f"Accuracy score for {cutoff} cutoff: {score}")
+    
+plt.plot(cutoffs, scores)
+plt.title("Accuracy of Random Forest Classifier with Different Cutoff Values")
+plt.xlabel("Cutoff Value")
+plt.ylabel("Accuracy Score")
+plt.show()
+# %% DOing the same for recall, which we might want to priortize
+scores = []
+for cutoff in cutoffs:
+    outcome = []
+    for prediction in predicted_probs[:, 1]:
+        if prediction >= cutoff:
+            outcome.append(1)
+        else:
+            outcome.append(0)
+    #outcome = outcome.to_array()
+    score = recall_score(y_test, outcome)
+    scores.append(score)
+    print(f"Recall score for {cutoff} cutoff: {score}")
+    
+plt.plot(cutoffs, scores)
+plt.title("Recall of Random Forest Classifier with Different Cutoff Values")
+plt.xlabel("Cutoff Value")
+plt.ylabel("Recall Score")
+plt.show()
+# %%
+from xgboost import XGBClassifier
+xgb = XGBClassifier()
+xgb.fit(X_train, y_train)
+print(classification_report(y_test, xgb.predict(X_test)))
+matrix = plot_confusion_matrix(xgb, X_test, y_test, cmap=plt.cm.Blues)
+plt.show()
+# %%
+from sklearn.svm import SVC
+svc = SVC()
+svc.fit(X_train, y_train)
+print(svc.score(X_test, y_test))
+print(confusion_matrix(y_test, svc.predict(X_test)))
+print(classification_report(y_test, svc.predict(X_test)))
 # %%

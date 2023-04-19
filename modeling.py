@@ -16,7 +16,7 @@ y= df['tsunami'].values
 #Train Test Split:
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.33, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
 
 from sklearn.neural_network import MLPClassifier
 
@@ -32,9 +32,9 @@ from sklearn.metrics import plot_confusion_matrix
 #Pretty CM Graph
 color = 'white'
 matrix = plot_confusion_matrix(mlp, X_test, y_test, cmap=plt.cm.Blues)
-matrix.ax_.set_title('Confusion Matrix', color=color)
 plt.xlabel('Predicted Label', color=color)
 plt.ylabel('True Label', color=color)
+plt.title('MLP Confusion Matrix')
 plt.gcf().axes[0].tick_params(colors=color)
 plt.gcf().axes[1].tick_params(colors=color)
 plt.show()
@@ -46,7 +46,7 @@ y_pred = gnb.fit(X_train, y_train).predict(X_test)
 #NB CM
 color = 'white'
 matrix = plot_confusion_matrix(gnb, X_test, y_test, cmap=plt.cm.Blues)
-matrix.ax_.set_title('Confusion Matrix2', color=color)
+plt.title('GNB Confusion Matrix')
 plt.xlabel('Predicted Label', color=color)
 plt.ylabel('True Label', color=color)
 plt.gcf().axes[0].tick_params(colors=color)
@@ -66,6 +66,17 @@ model = xgb.XGBClassifier()
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 predictions = [round(value) for value in y_pred]
+print(model.score(X_test, y_test))
+#First xgb cm
+color = 'white'
+matrix = plot_confusion_matrix(model, X_test, y_test, cmap=plt.cm.Blues)
+plt.title('Initial XGB Confusion Matrix')
+plt.xlabel('Predicted Label', color=color)
+plt.ylabel('True Label', color=color)
+plt.gcf().axes[0].tick_params(colors=color)
+plt.gcf().axes[1].tick_params(colors=color)
+plt.show()
+
 
 from sklearn.model_selection import GridSearchCV
 #Hyperparameter Tuning
@@ -91,11 +102,11 @@ print("Grid CV1 best score:",grid_cv.best_score_)
 print(grid_cv.best_params_)
 #New Parameter ranges since some are at their end
 param_grid2 = {
-    "max_depth": [8,9, 15, 20],
-    "learning_rate": [0.2, 0.4, 0.8],
-    "gamma": [1.5,2, 3, 5],
+    "max_depth": [7,8,15, 20],
+    "learning_rate": [0.005, 0.009, 0.01],
+    "gamma": [0.25],
     "reg_lambda": [0.25, 0.5, 0.75, 1, 2],
-    "scale_pos_weight": [1, 3, 5],
+    "scale_pos_weight": [3],
     "subsample": [0.8],
     "colsample_bytree": [0.5]
 }
@@ -112,14 +123,24 @@ final_cl = xgb.XGBClassifier(
 )
 
 _ = final_cl.fit(X_train, y_train)
+print("FINAL XGB Accuracy", final_cl.score(X_test, y_test))
 from sklearn.metrics import roc_auc_score
 A= roc_auc_score(y_test, final_cl.predict_proba(X_test)[:, 1])
-print(A)
+B=roc_auc_score(y_test, model.predict_proba(X_test)[:, 1])
+C= roc_auc_score(y_test, mlp.predict_proba(X_test)[:, 1])
+D=roc_auc_score(y_test, gnb.predict_proba(X_test)[:, 1])
+print("Tuned XGB ROC_AUC",A)
+print("First XGB ROC_AUC", B)
+print("MLP ROC_AUC",C)
+print("GNB ROC_AUC", D)
+
 color = 'white'
 matrix = plot_confusion_matrix(final_cl, X_test, y_test, cmap=plt.cm.Blues)
-matrix.ax_.set_title('Confusion Matrix2', color=color)
+plt.title('Final XGB Confusion Matrix')
 plt.xlabel('Predicted Label', color=color)
 plt.ylabel('True Label', color=color)
 plt.gcf().axes[0].tick_params(colors=color)
 plt.gcf().axes[1].tick_params(colors=color)
 plt.show()
+
+#SVM TIME

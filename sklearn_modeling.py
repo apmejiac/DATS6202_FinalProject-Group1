@@ -132,7 +132,7 @@ for cutoff in cutoffs:
     #outcome = outcome.to_array()
     score = recall_score(y_test, outcome)
     scores.append(score)
-    print(f"Recall score for {cutoff} cutoff: {score}")
+    print(f"Recall score for {cutoff} cutoff: {score.__round__(2)}")
     
 plt.plot(cutoffs, scores)
 plt.title("Recall of Random Forest Classifier with Different Cutoff Values")

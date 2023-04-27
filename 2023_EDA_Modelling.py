@@ -321,6 +321,27 @@ df_eda.plot(x="longitude", y="latitude", kind="scatter", c='magnitude', s=10,
 plt.show()
 
 
+##Plotly interactive map
+# import country_converter as coco
+# cc = coco.CountryConverter()
+# import pycountry_convert as pc
+# df_eda.insert(0,"iso_alpha", " ")
+# df_eda['iso_alpha'] = coco.convert(names=df_eda.Country_2.tolist(), to='ISO3', not_found=None)
+#
+
+df_plotly= df_eda.copy()
+df_plotly.sort_values('year', inplace=True)
+import plotly.express as px
+lat= df.latitude
+lon= df.longitude
+
+
+fig = px.scatter_geo(df_plotly, lat= lat,lon= lon, color="magnitude", color_continuous_scale=["yellow",
+   "orange", "red"], hover_name="Country_2", size= 100*(df_plotly["magnitude"]-df_plotly["magnitude"].min())/(df_plotly["magnitude"].max()-df_plotly["magnitude"].min()),
+               animation_frame= 'year', projection="equirectangular", title= 'Earthquakes between 2001 to 2022 ')
+fig.show(renderer= 'browser')
+
+
 ##Correlation matrix
 
 import seaborn as sns
@@ -338,8 +359,17 @@ sns.pairplot(df_eda, hue= 'tsunami')
 plt.show()
 
 # # NUmber of earthquakes that led to tsunami
+# #import plotly.express as px
+# df = px.data.gapminder()
+# fig = px.scatter(df, x="gdpPercap", y="lifeExp", animation_frame="year", animation_group="country",
+#            size="pop", color="continent", hover_name="country", facet_col="continent",
+#            log_x=True, size_max=45, range_x=[100,100000], range_y=[25,90])
+# fig.show()
 #
-#
+# ----add continents----
+
+
+# #
 #
 # # Modelling
 # ##Random forest
@@ -482,8 +512,46 @@ plt.xlabel('False Positive Rate')
 plt.tight_layout()
 plt.show()
 
-#### NN modelling
+#### SVM Modelling
 
+from sklearn.model_selection import train_test_split
+from sklearn import svm
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)  ##random state?
+
+##Generating the mdoel
+svm_clf= svm.SVC( kernel='linear')
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC:",metrics.recall_score(y_test, y_pred))
+
+##Tuning Hyperparameters
+svm_clf_r= svm.SVC(kernel='poly')
+svm_clf_r.fit(X_train, y_train)
+y_pred = svm_clf_r.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC poly:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC poly:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC poly:",metrics.recall_score(y_test, y_pred))
+
+svm_clf= svm.SVC(C= 0.95, kernel='linear', gamma= 'auto')
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC:",metrics.recall_score(y_test, y_pred))
 
 
 # #Original Dataset in case we want to save dat_time

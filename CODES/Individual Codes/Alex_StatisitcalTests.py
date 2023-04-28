@@ -98,11 +98,12 @@ df1=pd.DataFrame(x)
 df1.columns=OC
 #Place the output values back in the prepared dataset
 df1['tsunami']=y
+df1=(df1-df1.mean())/df1.std()
 num_df1 = df1.select_dtypes(include=['int64','float64']).copy()
 for i in num_df1.columns:
     print(f"New Dataset: {i}:",shapiro(num_df1[i]))
 
 
-#df1.to_csv('DF_PREPPED.csv')
+#df1.to_csv('DF_PREPPED.c sv')
 
 

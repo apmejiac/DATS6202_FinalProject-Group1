@@ -463,10 +463,14 @@ scaler.fit(df)
 scaled_data = scaler.transform(df)
 
 x= scaled_data
-df=pd.DataFrame(x)
+x= preprocessing.normalize(x)
+df1=pd.DataFrame(x)
 
-df.columns=OC
+df1.columns=OC
 #Place the output values back in the prepared dataset
-df['tsunami']=y
+df1['tsunami']=y
+num_df1 = df1.select_dtypes(include=['int64','float64']).copy()
+for i in num_df1.columns:
+    print(f"New Dataset: {i}:",shapiro(num_df1[i]))
 
 #df.to_csv('DF_PREPPED.csv')

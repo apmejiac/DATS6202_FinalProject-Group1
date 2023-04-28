@@ -505,4 +505,200 @@ score = model.evaluate(X_test, y_test, verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
+#ALEJANDRAS MODELING
+import time
+
+import numpy as np
+import pandas as pd
+from sklearn import preprocessing
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+import plotly.express as px
+import seaborn as sns
+
+# # Modelling
+# ##Random forest
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from scipy.stats import randint
+
+# # Tree Visualisation
+from sklearn.tree import export_graphviz
+# from IPython.display import Image
+# # import graphviz
+#
+# Splitting the data into features (X) and target (y)
+print(df_eda.isna().sum())
+#
+###Changing variables from categorical to dummies
+df_mod= df_eda.copy()
+df_mod['net'].replace(['us','at','ak', 'pt','nn','ci','hv','nc','official','duputel','uw'], [1,2,3,4,5,6,7,8,9,10,11], inplace=True)
+df_mod['magType'].replace(['mww','mwb','Mi','ml','mw','mwc','ms','mb','md'],[1,2,3,4,5,6,7,8,9], inplace=True)
+X = df_mod.drop(['tsunami','title','location','date_time','year', 'month', 'Country_2'], axis=1)
+y = df_mod['tsunami']
+
+# Splitting the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+##Fitting and evaluating the Model
+rf = RandomForestClassifier()
+rf.fit(X_train, y_train)
+## predict
+y_pred = rf.predict(X_test)
+
+rf.estimators_
+#
+# fn=X.columns
+# # cn=Y.columns
+# fig, axes = plt.subplots(nrows = 1,ncols = 1,figsize = (15,10), dpi=800)
+# tree.plot_tree(rf.estimators_[0],
+#                feature_names = fn,
+#                class_names='tsunami',
+#                filled = True);
+# # fig.savefig('rf_individualtree.png')
+# plt.show()
+
+##Model evaluation
+
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", round(accuracy*100,2))
+
+
+#Hyper parameters
+param_dist = {'n_estimators': randint(50,500),
+              'max_depth': randint(1,20)}
+
+# Create a random forest classifier
+# rf = RandomForestClassifier()
+
+# Use random search to find the best hyperparameters
+rand_search = RandomizedSearchCV(rf,
+                                 param_distributions = param_dist,
+                                 n_iter=5,
+                                 cv=5)
+
+# Fit the random search object to the data
+rand_search.fit(X_train, y_train)
+
+# Create a variable for the best model
+best_rf = rand_search.best_estimator_
+
+# Print the best hyperparameters
+print('Best hyperparameters:',  rand_search.best_params_)
+
+# Generate predictions with the best model
+y_pred = best_rf.predict(X_test)
+
+##Testing acaccutacy with best model
+accuracy2 = accuracy_score(y_test, y_pred)
+print("Accuracy:", round(accuracy2*100,2))
+
+# Create the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+
+ConfusionMatrixDisplay(confusion_matrix=cm).plot()
+plt.tight_layout()
+plt.title('Confusion Matrix most accurate model')
+plt.show()
+
+##Checking for accuracy, precision and recall
+
+
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+
+print("Accuracy:", round(accuracy2,2))
+print("Precision:", round(precision,2))
+print("Recall:", round(recall,2))
+
+
+# Create a series containing feature importances from the model and feature names from the training data
+feature_importances = pd.Series(best_rf.feature_importances_, index=X_train.columns).sort_values(ascending=False)
+
+# Plot a simple bar chart
+feature_importances.plot.bar()
+plt.tight_layout()
+plt.show()
+
+# ## Trying out Ada Boost
+
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
+dt= DecisionTreeClassifier(max_depth=1)
+
+#Instantiate Ada Boost
+
+ab = AdaBoostClassifier(base_estimator=dt, n_estimators=100)
+
+#Fit training set
+ab.fit(X_train,y_train)
+
+y_pred_pr = ab.predict_proba(X_test)[:,1]
+fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_pr)
+
+##Evaluate test- set
+ab_roc=roc_auc_score(y_test, y_pred_pr)
+print('ROC AUC score: {:.2f}'.format(ab_roc))
+
+#create ROC curve
+plt.plot(fpr,tpr)
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.tight_layout()
+plt.show()
+
+#### SVM Modelling
+
+from sklearn.model_selection import train_test_split
+from sklearn import svm
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)  ##random state?
+
+##Generating the mdoel
+svm_clf= svm.SVC( kernel='linear')
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC:",metrics.recall_score(y_test, y_pred))
+
+##Tuning Hyperparameters
+svm_clf_r= svm.SVC(kernel='poly')
+svm_clf_r.fit(X_train, y_train)
+y_pred = svm_clf_r.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC poly:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC poly:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC poly:",metrics.recall_score(y_test, y_pred))
+
+svm_clf= svm.SVC(C= 0.95, kernel='linear', gamma= 'auto')
+svm_clf.fit(X_train, y_train)
+y_pred = svm_clf.predict(X_test)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy SVC:",metrics.accuracy_score(y_test, y_pred))
+
+print("Precision SVC:",metrics.precision_score(y_test, y_pred))
+print("Recall SVC:",metrics.recall_score(y_test, y_pred))
+
+
+
 

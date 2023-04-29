@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+import shap
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
@@ -36,7 +37,7 @@ import seaborn as sns
 #==============Data Cleaning==================
 #=============================================
 
-url=  ('https://raw.githubusercontent.com/apmejiac/DATS6202_FinalProject-Group1/main/earthquake_data.csv')
+url=  ('earthquake_data.csv')
 df_raw=pd.read_csv(url)
 print(df_raw.isna().sum())
 print(len(df_raw))
@@ -75,9 +76,9 @@ df.to_csv('EQ_Clean.csv')
 
 
 ##EDA
-# ##Uploading clean database
-url=  ('https://raw.githubusercontent.com/apmejiac/DATS6202_FinalProject-Group1/main/EQ_Clean.csv')
-df=pd.read_csv(url)
+# # ##Uploading clean database
+# url=  ('https://raw.githubusercontent.com/apmejiac/DATS6202_FinalProject-Group1/main/earthquake_data.csv')
+df=pd.read_csv('EQ_Clean.csv')
 df_eda= df.copy()
 df_eda = df_eda.drop(['Unnamed: 0'], axis=1)
 
@@ -456,22 +457,31 @@ print("Accuracy:", round(accuracy2*100,2))
 # Create the confusion matrix
 cm = confusion_matrix(y_test, y_pred)
 
-ConfusionMatrixDisplay(confusion_matrix=cm).plot()
+
+ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap=plt.cm.Blues)
 plt.tight_layout()
-plt.title('Confusion Matrix most accurate model')
+plt.title('Confusion Matrix most accurate model Random Forest')
+plt.tight_layout()
 plt.show()
 
 ##Checking for accuracy, precision and recall
 
+from sklearn.metrics import f1_score
+from sklearn.metrics import roc_auc_score
 
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred)
 recall = recall_score(y_test, y_pred)
+F1= f1_score(y_test, y_pred)
+roc_auc = roc_auc_score(y_test, y_pred)
 
-print("Accuracy:", round(accuracy2,2))
-print("Precision:", round(precision,2))
-print("Recall:", round(recall,2))
 
+
+print("Accuracy RF:", round(accuracy2,4))
+print("Precision RF:", round(precision,4))
+print("Recall RF:", round(recall,4))
+print("F1 RF:", round(F1,4))
+print("ROC_AUC RF:", round(roc_auc,4))
 
 # Create a series containing feature importances from the model and feature names from the training data
 feature_importances = pd.Series(best_rf.feature_importances_, index=X_train.columns).sort_values(ascending=False)
@@ -481,6 +491,14 @@ feature_importances.plot.bar()
 plt.tight_layout()
 plt.show()
 
+##Shap values visualization
+import shap
+explainer= shap.TreeExplainer(rf)
+shap_v= explainer.shap_values(X_test)
+shap.summary_plot(shap_v[0],X_test)
+shap.summary_plot(shap_v,X_test)
+
+
 # ## Trying out Ada Boost
 
 from sklearn.ensemble import AdaBoostClassifier
@@ -488,6 +506,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import GridSearchCV
 
 dt= DecisionTreeClassifier(max_depth=1)
 
@@ -498,8 +518,47 @@ ab = AdaBoostClassifier(base_estimator=dt, n_estimators=100)
 #Fit training set
 ab.fit(X_train,y_train)
 
-y_pred_pr = ab.predict_proba(X_test)[:,1]
+#Hyper parameters
+grid = {'n_estimators': [10, 50, 100, 500],
+        'learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]}
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+
+#param grid
+param_grid = GridSearchCV(estimator= ab,
+                          param_grid = grid,
+                          n_jobs=-1,
+                          cv=cv,
+                          scoring= 'accuracy')
+
+# Fit the grid search object to the data
+g_result= param_grid.fit(X_train, y_train)
+
+# Create a variable for the best model
+best_ada = g_result.best_estimator_
+
+# Print the best hyperparameters
+print('Best hyperparameters:', g_result.best_params_)
+
+y_pred_pr = g_result.predict(X_test)
 fpr, tpr, _ = metrics.roc_curve(y_test,  y_pred_pr)
+
+
+# Model Accuracy: how often is the classifier correct?
+print("Accuracy AdaBoost:",round((metrics.accuracy_score(y_test, y_pred_pr)),4))
+print("Precision AdaBoost:",round((metrics.precision_score(y_test, y_pred_pr)),4))
+print("Recall AdaBoost:",round((metrics.recall_score(y_test, y_pred_pr)),4))
+print("F1 AdaBoost:",round((f1_score(y_test, y_pred_pr)),4))
+print("ROC_AUC AdaBoost:",round((roc_auc_score(y_test, y_pred_pr)),4))
+
+
+cm = confusion_matrix(y_test, y_pred_pr)
+
+
+ConfusionMatrixDisplay(confusion_matrix=cm).plot(cmap=plt.cm.Blues)
+plt.tight_layout()
+plt.title('Confusion Matrix most accurate model AdaBoost')
+plt.tight_layout()
+plt.show()
 
 ##Evaluate test- set
 ab_roc=roc_auc_score(y_test, y_pred_pr)

@@ -491,7 +491,7 @@ feature_importances.plot.bar()
 plt.tight_layout()
 plt.show()
 
-##Shap values visualization
+##Shap values visualization RF
 import shap
 explainer= shap.TreeExplainer(rf)
 shap_v= explainer.shap_values(X_test)

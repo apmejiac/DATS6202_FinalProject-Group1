@@ -74,8 +74,11 @@ num_df = df.select_dtypes(include=['int64','float64']).copy()
 corr_calc(num_df)
 
 #Norm Check
+from scipy import stats
 for i in num_df.columns:
-    print(f"{i}:",shapiro(num_df[i]))
+    z = stats.kstest(df[i], "norm")
+    print(f"K-S test: statistic{z[0]} p-value={z[1]}")
+
 
 #We can see that the data is non-normal in all columns (due to low p-values) so let's
 #We will use standard scaler to normalize the data
@@ -95,15 +98,14 @@ x= scaled_data
 x= preprocessing.normalize(x)
 df1=pd.DataFrame(x)
 
+
 df1.columns=OC
 #Place the output values back in the prepared dataset
 df1['tsunami']=y
-df1=(df1-df1.mean())/df1.std()
-num_df1 = df1.select_dtypes(include=['int64','float64']).copy()
-for i in num_df1.columns:
-    print(f"New Dataset: {i}:",shapiro(num_df1[i]))
 
 
 #df1.to_csv('DF_PREPPED.c sv')
 
 
+plt.hist(df1['tsunami'])
+plt.show()

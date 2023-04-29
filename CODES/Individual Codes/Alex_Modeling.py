@@ -116,6 +116,7 @@ grid_cv_2 = GridSearchCV(xgb_cl, param_grid2,
 
 _ = grid_cv_2.fit(X_train, y_train)
 print("gcv2 best score:",grid_cv_2.best_score_)
+print("gcv2 best params:", grid_cv_2.best_params_)
 #Final XGB classifier
 final_cl = xgb.XGBClassifier(
     **grid_cv_2.best_params_,
@@ -194,3 +195,4 @@ plt.ylabel('True Label', color=color)
 plt.gcf().axes[0].tick_params(colors=color)
 plt.gcf().axes[1].tick_params(colors=color)
 plt.show()
+

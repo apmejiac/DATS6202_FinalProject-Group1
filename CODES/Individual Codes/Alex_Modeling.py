@@ -181,7 +181,7 @@ grid_cv2 = GridSearchCV(SVM1, param_grid, n_jobs=-1, cv=3, scoring="roc_auc")
 _ = grid_cv2.fit(X_train, y_train)
 print("Grid CV2 best score:",grid_cv2.best_score_)
 
-print(grid_cv2.best_params_)
+print("SVM best Params", grid_cv2.best_params_)
 
 SVMF = svm.SVC(probability=True, C=2, degree=1, gamma=0.025, kernel='rbf')
 SVMF.fit(X_train, y_train)

@@ -75,9 +75,13 @@ corr_calc(num_df)
 
 #Norm Check
 from scipy import stats
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 for i in num_df.columns:
     z = stats.kstest(df[i], "norm")
     print(f"K-S test: statistic{z[0]} p-value={z[1]}")
+
+
+
 
 
 #We can see that the data is non-normal in all columns (due to low p-values) so let's
@@ -109,3 +113,15 @@ df1['tsunami']=y
 
 plt.hist(df1['tsunami'])
 plt.show()
+
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# VIF dataframe
+vif_data = pd.DataFrame()
+vif_data["feature"] = num_df.columns
+
+# calculating VIF for each feature
+vif_data["VIF"] = [variance_inflation_factor(num_df.values, i)
+                   for i in range(len(num_df.columns))]
+print(vif_data)
+#Generally Low Multicolinearity Concerns, 3 columns have high values, but this should not be a problem.

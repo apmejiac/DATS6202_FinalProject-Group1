@@ -444,6 +444,18 @@ def corr_calc (df):
 num_df = df.select_dtypes(include=['int64','float64']).copy()
 corr_calc(num_df)
 
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+# VIF dataframe
+vif_data = pd.DataFrame()
+vif_data["feature"] = num_df.columns
+
+# calculating VIF for each feature
+vif_data["VIF"] = [variance_inflation_factor(num_df.values, i)
+                   for i in range(len(num_df.columns))]
+print(vif_data)
+#Generally Low Multicolinearity Concerns, 3 columns have high values, but this should not be a problem.
+
 #Norm Check
 for i in num_df.columns:
     print(f"{i}:",shapiro(num_df[i]))
